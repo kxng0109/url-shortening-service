@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A URL Shortener API that helps shorten long URLs.",
   "main": "app.js",
+  "type": "module",
   "scripts": {
     "start": "node .",
     "dev": "nodemon ."
