@@ -9,6 +9,6 @@ export const errorHandler = (err, req, res, next) => {
 		error: getReasonPhrase(statusCode) || "Unknown Error",
 		message,
 		timestamp: new Date().toISOString(),
-		path: `${req.method} ${req.url}`,
+		path: `${req.method} ${req.originalUrl}`,
 	});
 };
