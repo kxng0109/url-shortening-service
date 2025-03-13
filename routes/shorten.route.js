@@ -1,9 +1,12 @@
 import { Router } from "express";
-import { createShort, getShort } from "../controllers/shorten.controller.js";
+import { createShort, deleteShort, getShort, getShortStat, updateShort } from "../controllers/shorten.controller.js";
+import removeSlash from "../middlewares/removeSlash.js";
+import shortChecker from "../middlewares/shortChecker.middleware.js";
 
 const router = Router();
 
-router.route("*").get(getShort);
-router.route("/").post(createShort);
+router.route("/:shortCode/stats").get(removeSlash, getShortStat);
+router.route("/*").get(removeSlash, getShort).patch(removeSlash, updateShort).delete(removeSlash, deleteShort);
+router.route("/").post(removeSlash, createShort);
 
 export default router;
