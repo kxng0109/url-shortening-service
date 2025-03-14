@@ -4,7 +4,7 @@ import shortenModel from "../model/shorten.model.js";
 
 const shortCodeValidator = async (req, _res, next) => {
 	try {
-		let givenShort = req.params.givenShort || req.url;
+		let givenShort = req.params.givenShort;
 
 		if (
 			!givenShort ||

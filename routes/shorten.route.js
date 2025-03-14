@@ -15,9 +15,11 @@ const router = Router();
 router
 	.route("/:givenShort/stats")
 	.get(removeSlash, shortCodeValidator, getShortStat);
+
+router.route("/:givenShort").get(removeSlash, shortCodeValidator, getShort);
+
 router
-	.route("/*")
-	.get(removeSlash, shortCodeValidator, getShort)
+	.route("/:givenShort")
 	.patch(removeSlash, shortCodeValidator, urlValidator, updateShort)
 	.delete(removeSlash, shortCodeValidator, deleteShort);
 router.route("/").post(removeSlash, urlValidator, createShort);
