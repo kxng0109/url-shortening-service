@@ -1,28 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import validator from "validator";
 import shortenModel from "../model/shorten.model.js";
 import accessCounter from "../utils/accessCounter.js";
 import nanoid from "../utils/shortCodeGenerator.js";
 
-const regex = /^(https?:\/\/)(?:(?:www\.[A-Za-z0-9]+\.[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)|(?:[A-Za-z0-9]+\.[A-Za-z0-9]+))\/[A-Za-z0-9]+(?:\/[A-Za-z0-9]+)*(?:\?[A-Za-z0-9]+=[A-Za-z0-9]+(?:&[A-Za-z0-9]+=[A-Za-z0-9]+)*)?$/;
-
 export const getShort = async (req, res, next) => {
 	try {
-		let { url: givenShort } = req;
-		if(!givenShort || !validator.isAlphanumeric(givenShort, "en-US")){
-			return next({
-				status: StatusCodes.BAD_REQUEST,
-				message: "Invalid short code. Short code required"
-			})
-		};
-
-		const findShort = await shortenModel.findOne({ shortCode: givenShort });
-		if (!findShort) {
-			return next({
-				status: StatusCodes.NOT_FOUND,
-				message: "The requested short code was not found.",
-			});
-		}
+		const { findShort } = req.user;
 
 		const { _id, url, shortCode, createdAt, updatedAt } = findShort;
 		await accessCounter(_id);
@@ -37,30 +20,16 @@ export const getShort = async (req, res, next) => {
 			},
 		});
 	} catch (err) {
-		console.log(err);
 		next(err);
 	}
 };
 
-export const getShortStat = async(req, res, next) =>{
+export const getShortStat = async (req, res, next) => {
 	try {
-		let { shortCode } = req.params;
-		if(!shortCode || !validator.isAlphanumeric(shortCode, "en-US")){
-			return next({
-				status: StatusCodes.BAD_REQUEST,
-				message: "Invalid short code. Short code required"
-			})
-		};
+		const { findShort } = req.user;
 
-		const findShort = await shortenModel.findOne({ shortCode: shortCode });
-		if (!findShort) {
-			return next({
-				status: StatusCodes.NOT_FOUND,
-				message: "The requested short code was not found.",
-			});
-		}
-
-		const { _id, url, createdAt, updatedAt, accessCount } = findShort;
+		const { _id, shortCode, url, createdAt, updatedAt, accessCount } =
+			findShort;
 		await accessCounter(_id);
 		res.status(StatusCodes.OK).json({
 			status: StatusCodes.OK,
@@ -70,7 +39,7 @@ export const getShortStat = async(req, res, next) =>{
 				shortCode,
 				createdAt,
 				updatedAt,
-				accessCount
+				accessCount,
 			},
 		});
 	} catch (err) {
@@ -80,16 +49,9 @@ export const getShortStat = async(req, res, next) =>{
 
 export const createShort = async (req, res, next) => {
 	try {
-		const { url: givenURL } = req.body;
-		const isValidURL = validator.isURL(value, {protocols: ["http", "https"], require_protocol: true}) && regex.test(value);
-		if (!isValidURL) {
-			return next({
-				status: StatusCodes.BAD_REQUEST,
-				message: "Invalid URL. URL required!",
-			});
-		}
+		const { givenURL } = req.user;
 
-		const findShort = await shortenModel.findOne({ url: givenURL });
+		const findShort = await shortenModel.findOne({ givenURL });
 		if (findShort && findShort !== null) {
 			return next({
 				status: StatusCodes.CONFLICT,
@@ -98,7 +60,7 @@ export const createShort = async (req, res, next) => {
 		}
 
 		const shortCode = nanoid();
-		await shortenModel.create({ url: givenURL, shortCode});
+		await shortenModel.create({ url: givenURL, shortCode });
 		res.status(StatusCodes.CREATED).json({
 			status: StatusCodes.CREATED,
 			message: "Short URL created successfully.",
@@ -114,11 +76,11 @@ export const createShort = async (req, res, next) => {
 				message: err.message,
 			});
 		}
-		if(err.name && err.name === "ValidationError"){
+		if (err.name && err.name === "ValidationError") {
 			return next({
 				status: StatusCodes.BAD_REQUEST,
-				message: err.message
-			})
+				message: err.message,
+			});
 		}
 		next(err);
 	}
@@ -126,19 +88,13 @@ export const createShort = async (req, res, next) => {
 
 export const updateShort = async (req, res, next) => {
 	try {
-		let { url: givenShort } = req;
-		let {url: givenURL} = req.body;
-		//validator needed. WE only need short codes and we don't need special characters. Also I think the maximum should be maybe 6 chactarers with any mix of numbers and or letters
-		givenShort = givenShort.replace("/", "");
-		// console.log(givenShort)
-		if (!givenURL || givenURL === "/") {
-			return next({
-				status: StatusCodes.BAD_REQUEST,
-				message: "Short code(short URL) required",
-			});
-		}
+		const { givenShort, givenURL } = req.user;
 
-		const updateShort = await shortenModel.findOneAndUpdate({shortCode: givenShort}, {url: givenURL}, {runValidators: true, new: true});
+		const updateShort = await shortenModel.findOneAndUpdate(
+			{ shortCode: givenShort },
+			{ url: givenURL },
+			{ runValidators: true, new: true },
+		);
 		if (!updateShort) {
 			return next({
 				status: StatusCodes.NOT_FOUND,
@@ -146,7 +102,7 @@ export const updateShort = async (req, res, next) => {
 			});
 		}
 
-		const {_id, url, shortCode, createdAt, updatedAt} = updateShort;
+		const { _id, url, shortCode, createdAt, updatedAt } = updateShort;
 		await accessCounter(_id);
 		res.status(StatusCodes.OK).json({
 			status: StatusCodes.OK,
@@ -163,17 +119,13 @@ export const updateShort = async (req, res, next) => {
 	}
 };
 
-export const deleteShort = async(req, res, next) =>{
+export const deleteShort = async (req, res, next) => {
 	try {
-		let { url: givenShort } = req;
-		if(!givenShort || !validator.isAlphanumeric(givenShort, "en-US")){
-			return next({
-				status: StatusCodes.BAD_REQUEST,
-				message: "Invalid short code. Short code required"
-			})
-		};
+		const { givenShort } = req.user;
 
-		const deleteShort = await shortenModel.findOneAndDelete({ shortCode: givenShort });
+		const deleteShort = await shortenModel.findOneAndDelete({
+			shortCode: givenShort,
+		});
 		if (!deleteShort) {
 			return next({
 				status: StatusCodes.NOT_FOUND,
@@ -183,9 +135,9 @@ export const deleteShort = async(req, res, next) =>{
 
 		res.status(StatusCodes.NO_CONTENT).json({
 			status: StatusCodes.NO_CONTENT,
-			message: "URL deleted successfully."
-		})
-	}catch(err){
-		next(err)
+			message: "URL deleted successfully.",
+		});
+	} catch (err) {
+		next(err);
 	}
-}
+};

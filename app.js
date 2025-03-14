@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 3000;
 
 (async () => {
 	try {
-		app.listen(PORT, () => console.log(`Server ruuning on port ${PORT}`));
+		app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 		await connectDB();
 	} catch (err) {
 		console.error("Error occurred will setting up server", err);
