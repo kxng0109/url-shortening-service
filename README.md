@@ -13,7 +13,7 @@ The URL Shortening Service is a RESTful API that enables users to convert long U
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
-- [URL & Short Code Specifications](#)
+- [URL & Short Code Specifications](#url--short-code-specifications)
 - [Project Structure](#project-structure)
 - [Security Considerations](#security-considerations)
 - [Testing](#testing)
